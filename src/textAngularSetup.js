@@ -1,8 +1,8 @@
 /*
-textAngular
+@license textAngular
 Author : Austin Anderson
 License : 2013 MIT
-Version 1.2.2
+Version 1.3.0-pre9
 
 See README.md or https://github.com/fraywing/textAngular/wiki for requirements and use.
 */
@@ -78,7 +78,7 @@ angular.module('textAngularSetup', [])
 	}
 ])
 
-.constant('taTranslations', {
+.value('taTranslations', {
 	// moved to sub-elements
 	//toggleHTML: "Toggle HTML",
 	//insertImage: "Please enter a image URL to insert",
@@ -480,19 +480,34 @@ angular.module('textAngularSetup', [])
 		var floatLeft = angular.element('<button type="button" class="btn btn-default btn-sm btn-small" unselectable="on" tabindex="-1"><i class="fa fa-align-left"></i></button>');
 		floatLeft.on('click', function(event){
 			event.preventDefault();
+			// webkit
 			$element.css('float', 'left');
+			// firefox
+			$element.css('cssFloat', 'left');
+			// IE < 8
+			$element.css('styleFloat', 'left');
 			finishEdit();
 		});
 		var floatRight = angular.element('<button type="button" class="btn btn-default btn-sm btn-small" unselectable="on" tabindex="-1"><i class="fa fa-align-right"></i></button>');
 		floatRight.on('click', function(event){
 			event.preventDefault();
+			// webkit
 			$element.css('float', 'right');
+			// firefox
+			$element.css('cssFloat', 'right');
+			// IE < 8
+			$element.css('styleFloat', 'right');
 			finishEdit();
 		});
 		var floatNone = angular.element('<button type="button" class="btn btn-default btn-sm btn-small" unselectable="on" tabindex="-1"><i class="fa fa-align-justify"></i></button>');
 		floatNone.on('click', function(event){
 			event.preventDefault();
+			// webkit
 			$element.css('float', '');
+			// firefox
+			$element.css('cssFloat', '');
+			// IE < 8
+			$element.css('styleFloat', '');
 			finishEdit();
 		});
 		buttonGroup.append(floatLeft);
@@ -534,16 +549,18 @@ angular.module('textAngularSetup', [])
 		tooltiptext: taTranslations.insertVideo.tooltip,
 		action: function(){
 			var urlPrompt;
-			urlPrompt = $window.prompt(taTranslations.insertVideo.dialogPrompt, 'http://');
-			if (urlPrompt && urlPrompt !== '' && urlPrompt !== 'http://') {
+			urlPrompt = $window.prompt(taTranslations.insertVideo.dialogPrompt, 'https://');
+			if (urlPrompt && urlPrompt !== '' && urlPrompt !== 'https://') {
 				// get the video ID
 				var ids = urlPrompt.match(/(\?|&)v=[^&]*/);
 				/* istanbul ignore else: if it's invalid don't worry - though probably should show some kind of error message */
 				if(ids.length > 0){
 					// create the embed link
-					var urlLink = "http://www.youtube.com/embed/" + ids[0].substring(3);
+					var urlLink = "https://www.youtube.com/embed/" + ids[0].substring(3);
 					// create the HTML
-					var embed = '<img class="ta-insert-video" src="http://img.youtube.com/vi/' + ids[0].substring(3) + '/maxresdefault.jpg" ta-insert-video="' + urlLink + '" contenteditable="false" src="" allowfullscreen="true" frameborder="0" />';
+					// for all options see: http://stackoverflow.com/questions/2068344/how-do-i-get-a-youtube-video-thumbnail-from-the-youtube-api
+					// maxresdefault.jpg seems to be undefined on some.
+					var embed = '<img class="ta-insert-video" src="https://img.youtube.com/vi/' + ids[0].substring(3) + '/hqdefault.jpg" ta-insert-video="' + urlLink + '" contenteditable="false" src="" allowfullscreen="true" frameborder="0" />';
 					// insert
 					return this.$editor().wrapSelection('insertHTML', embed, true);
 				}
@@ -633,9 +650,7 @@ angular.module('textAngularSetup', [])
 		activeState: function(){ // this fires on keyup
 			var textElement = this.$editor().displayElements.text;
 			var workingHTML = textElement[0].innerHTML;
-			var workingDiv = angular.element('<div>');
-			workingDiv.html(workingHTML.replace(/(<\s*\/\s*\w\s*.*?>|<\s*br\s*>)/g,'$1\n'));
-			var sourceText = workingDiv[0].innerText || workingDiv[0].textContent; // to cover the non-jquery use case.
+			var sourceText = workingHTML.replace(/(<[^>]*?>)/ig, ' '); // replace all html tags with spaces
 			
 			// Caculate number of words
 			var sourceTextMatches = sourceText.match(/\S+/g);
